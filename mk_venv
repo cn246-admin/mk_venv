@@ -105,8 +105,7 @@ uninstall_module () {
 upgrade_modules () {
   python3 -m pip install --require-virtualenv --upgrade -r "${requirements_file}" | \
     grep -v 'Requirement already satisfied'
-  printf '%s\n' "[INFO] ${env} modules up to date!"
-  echo
+  printf '%s\n\n' "[INFO] ${env} modules up to date!"
 }
 
 
