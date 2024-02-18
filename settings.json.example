@@ -1,0 +1,46 @@
+{
+    "ansible": {
+        "comment": "This venv is used for Ansible playbooks",
+        "venv_base_dir": "~/.local/lib/venv/",
+        "venv_prompt": "ansible",
+        "venv_requirements": [
+            "ansible",
+            "ansible-lint",
+            "black",
+            "argcomplete",
+            "cryptography",
+            "dnspython",
+            "isort",
+            "jmespath",
+            "netaddr",
+            "pip",
+            "pylint",
+            "ruff",
+            "setuptools",
+            "wheel",
+            "yamlfix",
+            "yamllint"
+        ]
+    },
+    "aws": {
+        "comment": "This venv is used for AWS resource management",
+        "venv_base_dir": "~/.local/lib/venv/",
+        "venv_prompt": "aws",
+        "venv_requirements": [
+            "argcomplete",
+            "black",
+            "boto3",
+            "boto3-stubs[essential]",
+            "cfn-lint",
+            "isort",
+            "moto",
+            "pip",
+            "pylint",
+            "ruff",
+            "setuptools",
+            "wheel",
+            "yamlfix",
+            "yamllint"
+        ]
+    }
+}
