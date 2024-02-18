@@ -1,0 +1,163 @@
+#!/usr/bin/env bash
+
+# Description: Create and maintain python venvs from JSON formatted settings file
+# Usage:
+#   1. update settings.json with desired settings
+#   2. run the script: ./mk_venv
+
+settings=$(cat 'settings.json')
+
+# Query settings.json for venvs
+venvs() {
+  echo "${settings}" | python3 -c "
+import json
+import sys
+input = sys.stdin
+data = json.load(input)
+for k in data.keys():
+    print(k, end=' ')
+"
+}
+
+
+# Query settings.json for venv locations
+venv_location() {
+  echo "${settings}" | python3 -c "
+import json
+import sys
+from pathlib import Path
+input = sys.stdin
+data = json.load(input)
+directory = Path(data['${env}']['venv_base_dir'])
+print(directory.expanduser())
+"
+}
+
+
+# Query settings.json for venv prompt
+venv_prompt() {
+  echo "${settings}" | python3 -c "
+import json
+import sys
+input = sys.stdin
+data = json.load(input)
+directory = Path(data['${env}']['venv_prompt'])
+print(directory.expanduser())
+"
+}
+
+
+# Query settings.json for venv module requirements
+venv_requirements() {
+  echo "${settings}" | python3 -c "
+import json
+import sys
+input = sys.stdin
+data = json.load(input)
+for module in data['${env}']['venv_requirements']:
+    print(module)
+"
+}
+
+
+# Creates a python venv
+create_venv () {
+  if [ ! -f "${venv_path}/bin/activate" ]; then
+    printf '%s\n' "[INFO] Creating ${env} venv"
+    cd "${venv_base_dir}" || exit
+    python3 -m venv --upgrade-deps --prompt "${venv_prompt}" "${env}"
+  fi
+}
+
+
+# Compares new with existing requirements and creates array of modules to uninstall
+compare_requirements () {
+  remove=()
+  while IFS='' read -r line; do
+    remove+=("$line")
+  done < <(venv_requirements | diff "${requirements_file}" - | awk -F' ' '/</ { print $2 }')
+}
+
+
+# Creates or updates requirements.txt
+create_requirements () {
+  if [ ! -f "${requirements_file}" ]; then
+    printf '%s\n' "[INFO] Creating ${env} requirements.txt"
+    venv_requirements > "${requirements_file}"
+  else
+    if ! venv_requirements | cmp --silent "${requirements_file}" -; then
+      compare_requirements
+
+      printf '%s\n' "[INFO] Updating ${env} requirements.txt with changes found in settings.json"
+      venv_requirements > "${requirements_file}"
+    fi
+  fi
+}
+
+
+# Uninstalls python modules
+uninstall_module () {
+  python3 -m pip uninstall --require-virtualenv "${1}"
+}
+
+
+# Upgrades python modules
+upgrade_modules () {
+  python3 -m pip install --require-virtualenv --upgrade -r "${requirements_file}" | \
+    grep -v 'Requirement already satisfied'
+  printf '%s\n' "[INFO] ${env} modules up to date!"
+  echo
+}
+
+
+# Create array of venvs from settings.json
+IFS=" " read -r -a array <<< "$(venvs)"
+
+# Loop over venvs and create or update the venv and python modules
+for env in "${array[@]}"; do
+  venv_base_dir="$(venv_location)"
+  venv_prompt="$(venv_prompt)"
+  venv_path="${venv_base_dir}/${env}"
+  requirements_file="${venv_path}/requirements.txt"
+
+  printf '%s\n' "[INFO] Working on ${env} venv"
+
+  # Make sure venv_base_dir exists
+  if [ ! -d "${venv_base_dir}" ]; then
+    mkdir -p "${venv_base_dir}"
+  fi
+
+  # Make sure venv exists
+  create_venv
+
+  # Make sure requirements_file exists
+  create_requirements
+
+  # Activate venv and install, remove or upgrade modules
+  if [ "$VIRTUAL_ENV" = "${venv_path}" ]; then
+    if [ ${#remove[@]} -gt 0 ]; then
+      for module in "${remove[@]}"; do
+        uninstall_module "${module}"
+      done
+    fi
+    upgrade_modules
+  else
+    # shellcheck source=/dev/null
+    . "${venv_path}/bin/activate"
+
+    # Uninstall modules
+    if [ ${#remove[@]} -gt 0 ]; then
+      for module in "${remove[@]}"; do
+        uninstall_module "${module}"
+      done
+    fi
+
+    # Upgrade modules
+    upgrade_modules
+  fi
+
+  # Reset array so we don't uninstall modules in other venvs
+  remove=()
+done
+
+# vim: ft=sh ts=2 sts=2 sw=2 sr et
