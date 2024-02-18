@@ -134,27 +134,20 @@ for env in "${array[@]}"; do
   create_requirements
 
   # Activate venv and install, remove or upgrade modules
-  if [ "$VIRTUAL_ENV" = "${venv_path}" ]; then
-    if [ ${#remove[@]} -gt 0 ]; then
-      for module in "${remove[@]}"; do
-        uninstall_module "${module}"
-      done
-    fi
-    upgrade_modules
-  else
+  if [ ! "$VIRTUAL_ENV" = "${venv_path}" ]; then
     # shellcheck source=/dev/null
     . "${venv_path}/bin/activate"
-
-    # Uninstall modules
-    if [ ${#remove[@]} -gt 0 ]; then
-      for module in "${remove[@]}"; do
-        uninstall_module "${module}"
-      done
-    fi
-
-    # Upgrade modules
-    upgrade_modules
   fi
+
+  # Uninstall modules
+  if [ ${#remove[@]} -gt 0 ]; then
+    for module in "${remove[@]}"; do
+      uninstall_module "${module}"
+    done
+  fi
+
+  # Upgrade modules
+  upgrade_modules
 
   # Reset array so we don't uninstall modules in other venvs
   remove=()
