@@ -8,7 +8,7 @@
 settings=$(cat 'settings.json')
 
 # Query settings.json for venvs
-venvs() {
+get_venvs() {
   echo "${settings}" | python3 -c "
 import json
 import sys
@@ -28,7 +28,7 @@ import sys
 from pathlib import Path
 input = sys.stdin
 data = json.load(input)
-directory = Path(data['${env}']['venv_base_dir'])
+directory = Path(data['${venv}']['venv_base_dir'])
 print(directory.expanduser())
 "
 }
@@ -41,7 +41,7 @@ import json
 import sys
 input = sys.stdin
 data = json.load(input)
-prompt = data['${env}']['venv_prompt']
+prompt = data['${venv}']['venv_prompt']
 print(prompt)
 "
 }
@@ -54,7 +54,7 @@ import json
 import sys
 input = sys.stdin
 data = json.load(input)
-for module in data['${env}']['venv_requirements']:
+for module in data['${venv}']['venv_requirements']:
     print(module)
 "
 }
@@ -63,9 +63,9 @@ for module in data['${env}']['venv_requirements']:
 # Creates a python venv
 create_venv () {
   if [ ! -f "${venv_path}/bin/activate" ]; then
-    printf '%s\n' "[INFO] Creating ${env} venv"
+    printf '%s\n' "[INFO] Creating ${venv} venv"
     cd "${venv_base_dir}" || exit
-    python3 -m venv --upgrade-deps --prompt "${venv_prompt}" "${env}"
+    python3 -m venv --upgrade-deps --prompt "${venv_prompt}" "${venv}"
   fi
 }
 
@@ -73,7 +73,7 @@ create_venv () {
 # Compares new with existing requirements and creates array of modules to uninstall
 compare_requirements () {
   remove=()
-  while IFS='' read -r line; do
+  while IFS="" read -r line; do
     remove+=("$line")
   done < <(venv_requirements | diff "${requirements_file}" - | awk -F' ' '/</ { print $2 }')
 }
@@ -82,13 +82,13 @@ compare_requirements () {
 # Creates or updates requirements.txt
 create_requirements () {
   if [ ! -f "${requirements_file}" ]; then
-    printf '%s\n' "[INFO] Creating ${env} requirements.txt"
+    printf '%s\n' "[INFO] Creating ${venv} requirements.txt"
     venv_requirements > "${requirements_file}"
   else
     if ! venv_requirements | cmp --silent "${requirements_file}" -; then
       compare_requirements
 
-      printf '%s\n' "[INFO] Updating ${env} requirements.txt with changes found in settings.json"
+      printf '%s\n' "[INFO] Updating ${venv} requirements.txt with changes found in settings.json"
       venv_requirements > "${requirements_file}"
     fi
   fi
@@ -105,21 +105,21 @@ uninstall_module () {
 upgrade_modules () {
   python3 -m pip install --require-virtualenv --upgrade -r "${requirements_file}" | \
     grep -v 'Requirement already satisfied'
-  printf '%s\n\n' "[INFO] ${env} modules up to date!"
+  printf '%s\n\n' "[INFO] ${venv} modules up to date!"
 }
 
 
 # Create array of venvs from settings.json
-IFS=" " read -r -a array <<< "$(venvs)"
+IFS=" " read -r -a venvs <<< "$(get_venvs)"
 
 # Loop over venvs and create or update the venv and python modules
-for env in "${array[@]}"; do
+for venv in "${venvs[@]}"; do
   venv_base_dir="$(venv_location)"
   venv_prompt="$(venv_prompt)"
-  venv_path="${venv_base_dir}/${env}"
+  venv_path="${venv_base_dir}/${venv}"
   requirements_file="${venv_path}/requirements.txt"
 
-  printf '%s\n' "[INFO] Working on ${env} venv"
+  printf '%s\n' "[INFO] Working on ${venv} venv"
 
   # Make sure venv_base_dir exists
   if [ ! -d "${venv_base_dir}" ]; then
