@@ -4,7 +4,7 @@ Create and maintain python venvs.
 
 I keep my venvs in a central location - `~/.local/lib/venv/*` which makes maintenance much easier.
 
-Check out the [activate script](https://github.com/cn246-dotfiles/zsh/blob/main/.config/zsh/functions/activate)in my zsh dotfiles for easy activation of venvs!
+Check out the [activate script](https://github.com/cn246-dotfiles/zsh/blob/main/.config/zsh/functions/activate) in my zsh dotfiles for easy activation of venvs!
 
 
 ## Installation
