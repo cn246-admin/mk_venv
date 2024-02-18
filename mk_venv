@@ -41,8 +41,8 @@ import json
 import sys
 input = sys.stdin
 data = json.load(input)
-directory = Path(data['${env}']['venv_prompt'])
-print(directory.expanduser())
+prompt = data['${env}']['venv_prompt']
+print(prompt)
 "
 }
 
