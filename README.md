@@ -1,4 +1,4 @@
-# mk_venv
+# mkvenv
 
 Create and maintain Python venvs.
 
