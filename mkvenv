@@ -5,7 +5,18 @@
 #   1. update settings.json with desired settings
 #   2. run the script: ./mk_venv
 
-settings=$(cat 'settings.json')
+settings_file='settings.json'
+
+# Check for and load settings.json
+settings_check() {
+  if [ ! -f "${settings_file}" ]; then
+    printf '%s\n' "[ERROR] Can't find settings.json file. Exiting.."
+    exit 1
+  else
+    settings=$(< "${settings_file}")
+  fi
+}
+
 
 # Query settings.json for venvs
 get_venvs() {
@@ -108,6 +119,9 @@ upgrade_modules () {
   printf '%s\n\n' "[INFO] ${venv} modules up to date!"
 }
 
+
+# Check and load settings
+settings_check
 
 # Create array of venvs from settings.json
 IFS=" " read -r -a venvs <<< "$(get_venvs)"
