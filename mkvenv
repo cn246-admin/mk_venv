@@ -5,7 +5,8 @@
 #   1. update settings.json with desired settings
 #   2. run the script: ./mk_venv
 
-settings_file='settings.json'
+script_dir="$(dirname -- "$(readlink -f "${0}" )")"
+settings_file="${script_dir}/settings.json"
 
 # Check for and load settings.json
 settings_check() {
