@@ -78,6 +78,11 @@ create_venv () {
     printf '%s\n' "[INFO] Creating ${venv} venv"
     cd "${venv_base_dir}" || exit
     python3 -m venv --upgrade-deps --prompt "${venv_prompt}" "${venv}"
+  else
+    if [ ! -e "${venv_path}/bin/python3" ]; then
+      printf '%s\n' "[INFO] Updating python3 symlinks and reinstalling modules"
+      python3 -m venv --clear "${venv_path}"
+    fi
   fi
 }
 
